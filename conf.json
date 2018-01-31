@@ -2,7 +2,6 @@
   "server": {
     "port": 8082,
     "ip": "192.168.0.30",
-    "name": "rPI"
   },
   "websocketServer": {
     "port": 8082
@@ -10,23 +9,5 @@
   "socket": {
     "port": 2329
   },
-  "connections": [
-    {
-      "configuration": {
-        "file": "\/dev\/serial0",
-        "speed": 19200
-      },
-      "name": "Serial",
-      "id": 3,
-      "type": "SERIAL"
-    },
-    {
-      "configuration": {
-        "scriptToRun": "runme.sh"
-      },
-      "name": "python_script",
-      "id": 444,
-      "type": "EXTERNAL_SCRIPT"
-    }
-  ]
+  "connections": []
 }
