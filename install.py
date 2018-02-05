@@ -154,21 +154,22 @@ def updateConf():
     pass
 
 
-try:
+if (not os.path.isfile("conf.json") ):
+	os.system('cp confOrg.json conf.json')
+	
 
 
-    if ask("Would You like to install psutil - it's needed to make application manager works properly ?"):
-       installPsUtil()
 
-    if ask("Would You like to install  adafruit-pca9685 - it's with playting with PWM servo mechanism device ?"):
-        isntallAdafruitPWM()
+if ask("Would You like to install psutil - it's needed to make application manager works properly ?"):
+   installPsUtil()
 
-    if ask("Would You like to update your configuration ? - its needed for proper connecting remoteme to server"):
-        updateConf()
+if ask("Would You like to install  adafruit-pca9685 - it's with playting with PWM servo mechanism device ?"):
+    isntallAdafruitPWM()
 
-    os.system('chmod +x runme.sh')
-    os.system('chmod +x remoteme')
+if ask("Would You like to update your configuration ? - its needed for proper connecting remoteme to server"):
+    updateConf()
 
-    print( bcolors.OKGREEN+"INSTALATION finish you can run remoteme by './runme.sh'"+ bcolors.ENDC )
-except:
-    print(bcolors.FAIL + "Error while isntalation :( (Are You sudo ?)" + bcolors.ENDC)
+os.system('chmod +x runme.sh')
+os.system('chmod +x remoteme')
+
+print( bcolors.OKGREEN+"INSTALATION finish you can run remoteme by './runme.sh'"+ bcolors.ENDC )

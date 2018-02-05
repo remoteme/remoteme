@@ -1,0 +1,10 @@
+{
+  "server": {
+    "ip": "app.remoteme.org",
+    "port": 80
+  },
+  "socket": {
+    "port": 2329
+  },
+  "connections": []
+}
