@@ -20,8 +20,8 @@ class Singleton(type):
 class RemoteMe(metaclass=Singleton):
     pass
 
-    __userMessageListeners=[]
-    __userSyncMessageListeners=[]
+    __userMessageListener=None
+    __userSyncMessageListener=None
 
 
     __socketObj = None
@@ -74,28 +74,32 @@ class RemoteMe(metaclass=Singleton):
 
     def __onUserMessage(self,userMessageSettings,senderDeviceId,messageId,data):
         self.__logger.debug("got user sender deviceId:{} datalen:{} data: {} ".format(senderDeviceId , len(data),self.__toHexString(data)))
-        for listener in self.__userMessageListeners:
-            listener(senderDeviceId,data)
+        if self.__userMessageListener is not None:
+            self.__userMessageListener(senderDeviceId,data)
+        else:
+            self.__logger.warning("got user message but no function to process was set")
 
     def __onSyncMessage(self,senderDeviceId,messageId, data):
-        self.__logger.debug("got user senc sender senderDeviceId:{} messageId:{} datalen:{} data: {} ".format(senderDeviceId, messageId, len(data),self.__toHexString(data)))
+        self.__logger.debug("got user sync sender senderDeviceId:{} messageId:{} datalen:{} data: {} ".format(senderDeviceId, messageId, len(data),self.__toHexString(data)))
         response=None
 
-        for listener in self.__userSyncMessageListeners:
-            response = listener(senderDeviceId, data)
+        if self.__userSyncMessageListener is not None:
+            response = self.__userSyncMessageListener(senderDeviceId, data)
 
-        if response is None:
-            response=[]
+            if response is None:
+                response=[]
 
-        responseMessage = remotemeMessages.getSyncResponseMessage(messageId,response)
-        self.__send(responseMessage)
-
+            responseMessage = remotemeMessages.getSyncResponseMessage(messageId,response)
+            self.__send(responseMessage)
+        else:
+            self.__logger.warning("got user sync message but no function to process was set")
 
 
     def __send(self,message):
         self.__socketObj.sendall(message)
 
-
+    def __sendRest(self, message):
+        self.__socketObj.sendall(message)
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.__logger.info("Exit remoteme python with id {}".format(self.__ownId))
@@ -143,14 +147,17 @@ class RemoteMe(metaclass=Singleton):
         self.__send(remotemeMessages.getRegisterLeafDeviceMessage(parentId, self.__ownId, name,
                                                                   remotemeStruct.LeafDeviceType.LD_EXTERNAL_SCRIPT))
 
-    def addUserMessageListener(self, function):
-        self.__userMessageListeners.append(function)
+    def setUserMessageListener(self, function):
+        self.__userMessageListener=function
 
-    def addUserSyncMessageListener(self, function):
-        self.__userSyncMessageListeners.append(function)
+    def setUserSyncMessageListener(self, function):
+        self.__userSyncMessageListener=function
 
     def sendUserMessage(self,receiveDeviceId,data):
         self.__send(remotemeMessages.getUserMessage(remotemeStruct.UserMessageSettings.NO_RENEWAL, receiveDeviceId, self.__ownId, 0, data))
+
+    def sendUserMessageRest(self, receiveDeviceId, data):
+        self.__sendRest(remotemeMessages.getUserMessage(remotemeStruct.UserMessageSettings.NO_RENEWAL, receiveDeviceId,  self.__ownId, 0, data))
 
     def logServerInfo(self, message):
         self.__send(remotemeMessages.getLogMessage(remotemeStruct.LogLevel.INFO, message))

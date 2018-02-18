@@ -2,24 +2,40 @@ import struct
 
 import remotemeStruct
 import array
+import six
+
+
+
+def getStringFromArray(data):
+    return data.decode("utf-8")
+
+def getByteArray(data):
+    if isinstance(data, six.string_types):
+        return data.encode("utf-8")
+    else:
+        return bytearray(data)
 
 def getUserMessage(userMessageSettings,receiverDeviceId,senderDeviceId,messageId,data):
+    data= getByteArray(data)
     size = 7 + len(data)
     return struct.pack(">hhBhhh{0}s".format(len(data)), remotemeStruct.MessageType.USER_MESSAGE._value_, size, userMessageSettings._value_, receiverDeviceId,
                                senderDeviceId, messageId, data)
 
 
 def getWebRtcMessage(data):
+    data = getByteArray(data)
     return struct.pack(">hh{0}s".format(len(data)), remotemeStruct.MessageType.USER_MESSAGE._value_, len(data), data)
 
 
+
+
 def getLogMessage(logLevel,message):
-    byteArray = message.encode("utf-8")
+    byteArray = getByteArray(message)
     size = 1 + len(byteArray)+1
     return struct.pack(">hhB{0}sB".format(len(byteArray)), remotemeStruct.MessageType.LOG._value_, size, logLevel._value_, byteArray, 0)
 
 def getSyncResponseMessage(messageId,byteArray):
-    byteArray=bytearray( byteArray)
+    byteArray=getByteArray(byteArray)
     size = 8 + len(byteArray)
     return struct.pack(">hhQ{0}s".format(len(byteArray)), remotemeStruct.MessageType.SYNC_MESSAGE_RESPONSE._value_, size, messageId, byteArray)
 
