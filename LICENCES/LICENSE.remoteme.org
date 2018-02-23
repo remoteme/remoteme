@@ -1,0 +1,2 @@
+Copyright (c) 2018, Remoteme.org
+remoteme.org distributed sources Are under MIT licence
