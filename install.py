@@ -117,8 +117,7 @@ def updateConf():
         name = re.sub(r'\W+', '', name)
         if len(name) == 0:
             name = None
-        else:
-            name=checkIfTaken(ip,port,token,name,"isDeviceNameTaken")
+        
 #------------------- ID -----------------------------------------
 
     if data['server'].get('deviceId', None) != None:
