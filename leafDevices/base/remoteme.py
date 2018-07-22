@@ -39,13 +39,13 @@ class RemoteMe(metaclass=Singleton):
                 if (len(header) == 4):
                     [messageType, size] = struct.unpack(">hh", header)
                     messageType = remotemeStruct.MessageType(messageType)
+                    self.__logger.info("got message type {} size:{}".format(messageType,size));
                     data = self.__socketObj.recv(size)
                     if (len(data) == size):
                         if (messageType == remotemeStruct.MessageType.USER_MESSAGE):
                             [userMessageSettings, receiverDeviceId, senderDeviceId, messageId, data] = struct.unpack(
                                 ">Bhhh{0}s".format(size - remotemeStruct.USER_DATA_HEADEARS_SIZE), data)
                             userMessageSettings = remotemeStruct.UserMessageSettings(userMessageSettings)#for later use
-    
                             if (self.__ownId==receiverDeviceId):
                                 self.__onUserMessage(userMessageSettings,senderDeviceId, messageId, data)
                             else:
@@ -54,7 +54,6 @@ class RemoteMe(metaclass=Singleton):
                             self.__logger.info("expected size of bytes {} data length:{}".format(size - remotemeStruct.USER_SYNC_DATA_HEADEARS_SIZE,len(data)));
                             [receiverDeviceId, senderDeviceId, messageId, data] = struct.unpack(
                                 ">hhQ{0}s".format(size - remotemeStruct.USER_SYNC_DATA_HEADEARS_SIZE), data)
-    
                             if (self.__ownId==receiverDeviceId):
                                 self.__onSyncMessage(senderDeviceId, messageId, data)
                             else:
