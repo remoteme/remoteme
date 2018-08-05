@@ -2,7 +2,7 @@ import struct
 
 import remotemeStruct
 import array
-import six
+
 
 
 
@@ -10,7 +10,7 @@ def getStringFromArray(data):
     return data.decode("utf-8")
 
 def getByteArray(data):
-    if isinstance(data, six.string_types):
+    if isinstance(data,str):
         return data.encode("utf-8")
     else:
         return bytearray(data)
