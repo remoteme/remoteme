@@ -3,7 +3,7 @@ import struct
 import remotemeStruct
 import array
 
-
+from remoteMeDataWriter import RemoteMeDataWriter
 
 
 def getStringFromArray(data):
@@ -21,6 +21,26 @@ def getUserMessage(userMessageSettings,receiverDeviceId,senderDeviceId,messageId
     return struct.pack(">hhBhhh{0}s".format(len(data)), remotemeStruct.MessageType.USER_MESSAGE._value_, size, userMessageSettings._value_, receiverDeviceId,
                                senderDeviceId, messageId, data)
 
+def getVariableChangeMessage(senderDeviceId,ignoreCurrent,data):
+    size = 5  + len(data)
+    if ignoreCurrent:
+        size += 2
+
+    writer = RemoteMeDataWriter()
+    writer.writeUInt16(remotemeStruct.MessageType.VARIABLE_CHANGE_MESSAGE._value_)
+    writer.writeUInt16(size)
+
+    writer.writeUInt16(senderDeviceId)
+    if ignoreCurrent:
+        writer.writeUInt8(1)
+        writer.writeUInt16(senderDeviceId)
+    else:
+        writer.writeUInt8(0)
+
+    writer.writeUInt16(1)
+    writer.writeData(data)
+
+    return writer.getBytes()
 
 def getWebRtcMessage(data):
     data = getByteArray(data)

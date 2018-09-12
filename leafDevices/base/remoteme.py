@@ -9,8 +9,7 @@ import remotemeMessages
 import remotemeStruct
 import logging
 
-from observers import Observers
-from remotemeMessages import getUserMessage
+from variables import Variables
 
 
 
@@ -31,7 +30,7 @@ class RemoteMe(metaclass=Singleton):
     __socketObj = None
     __ownId = None
     __threadRead = None
-    __observers = None
+    __variables = None
 
     def __init__(self):
         self.__logger = logging.getLogger('remoteMe.RemoteMe')
@@ -63,8 +62,8 @@ class RemoteMe(metaclass=Singleton):
                                 self.__onSyncMessage(senderDeviceId, messageId, data)
                             else:
                                 print('PYTHON wrong deviceId :{} '.format(receiverDeviceId))
-                        elif messageType == remotemeStruct.MessageType.OBSERVER_CHANGE_PROPAGATE_MESSAGE:
-                            self.getObservers().__onObserverChangePropagate(data)
+                        elif messageType == remotemeStruct.MessageType.VARIABLE_CHANGE_PROPAGATE_MESSAGE:
+                            self.getVariables().__onVariableChangePropagate(data)
 
                         else:
                             print('PYTHON wrong data type {} '.format(messageType))
@@ -75,10 +74,10 @@ class RemoteMe(metaclass=Singleton):
 
 
 
-    def getObservers(self):
-        if (self.__observers == None):
-            self.__observers =  Observers(self)
-        return self.__observers
+    def getVariables(self):
+        if (self.__variables == None):
+            self.__variables =  Variables(self)
+        return self.__variables
 
 
     def __toHexString(self,array):
