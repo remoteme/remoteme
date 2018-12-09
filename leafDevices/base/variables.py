@@ -103,7 +103,7 @@ class Variables:
         writer = RemoteMeDataWriter()
         writer.writeUInt16(remotemeStruct.VariableType.BOOLEAN._value_)
         writer.writeString(name)
-        writer.writeUint8(1 if value else 0)
+        writer.writeUInt8(1 if value else 0)
         self.__remoteMe.send(remotemeMessages.getVariableChangeMessage(self.__remoteMe.getDeviceId(),ignoreCurrent,writer.getBytes()))
 
     def setInteger(self,name,value,ignoreCurrent=False):
@@ -145,7 +145,7 @@ class Variables:
         writer.writeUInt16(remotemeStruct.VariableType.INTEGER_BOOLEAN._value_)
         writer.writeString(name)
         writer.writeInt32(value)
-        writer.writeUint8(1 if value2 else 0)
+        writer.writeUInt8(1 if value2 else 0)
         self.__remoteMe.send(
             remotemeMessages.getVariableChangeMessage(self.__remoteMe.getDeviceId(), ignoreCurrent, writer.getBytes()))
 
