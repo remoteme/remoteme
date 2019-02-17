@@ -31,8 +31,6 @@ def ask(question):
     return answer == 'Y'
 
 
-print(bcolors.OKGREEN + "Warning: No active frommets remain. Continue?" + bcolors.ENDC)
-
 
 def installPsUtil():
     print("installing ps util it can take a while ...")
@@ -160,7 +158,7 @@ for opt in sys.argv:
     elif opt.startswith("-name"):
         name = opt.split("=")[1]
     elif opt.startswith("-deviceId"):
-        deviceId = opt.split("=")[1]
+        deviceId = int(opt.split("=")[1])
 
 if (not os.path.isfile("conf.json")):
     os.system('cp confOrg.json conf.json')
