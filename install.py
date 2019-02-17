@@ -7,6 +7,7 @@ import subprocess
 
 import os
 import urllib.request
+import sys
 import re
 
 
@@ -164,6 +165,10 @@ for opt in sys.argv:
 if (not os.path.isfile("conf.json")):
     os.system('cp confOrg.json conf.json')
 
+print(yesToAll)
+print(token)
+print(name)
+print(deviceId)
 
 if yesToAll or ask("Would You like to install psutil - it's needed to make application manager works properly ?"):
     installPsUtil()
