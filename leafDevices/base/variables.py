@@ -43,7 +43,7 @@ class Variables:
             if type ==remotemeStruct.VariableType.BOOLEAN:
                 value = reader.readInt8()==1
                 self.__logger.info("try to call {} {}".format(name,value))
-                toCall= self.__observables[name + str(type.value)]
+                toCall= self.__observables.get(name + str(type.value),None)
                 if toCall != None:
                     toCall(value)
                 else:
@@ -51,13 +51,13 @@ class Variables:
 
             elif type ==remotemeStruct.VariableType.INTEGER:
                 value = reader.readInt32()
-                toCall = self.__observables[name + str(type.value)]
+                toCall = self.__observables.get(name + str(type.value),None)
                 if toCall != None:
                     toCall(value)
 
             elif type == remotemeStruct.VariableType.TEXT:
                 value = reader.readString()
-                toCall = self.__observables[name + str(type.value)]
+                toCall = self.__observables.get(name + str(type.value),None)
                 if toCall != None:
                     toCall(value)
 
@@ -65,7 +65,7 @@ class Variables:
                 value = reader.readInt16()
                 value2 = reader.readInt16()
                 value3 = reader.readInt16()
-                toCall = self.__observables[name + str(type.value)]
+                toCall = self.__observables.get(name + str(type.value),None)
                 if toCall != None:
                     toCall(value,value2,value3)
 
@@ -74,30 +74,37 @@ class Variables:
                 value = reader.readInt16()
                 value2 = reader.readInt16()
 
-                toCall = self.__observables[name + str(type.value)]
+                toCall = self.__observables.get(name + str(type.value),None)
                 if toCall != None:
                     toCall(value,value2)
 
             elif type == remotemeStruct.VariableType.INTEGER_BOOLEAN:
                 value = reader.readInt32()
                 value2 =reader.readInt8()==1
-                toCall = self.__observables[name + str(type.value)]
+                toCall = self.__observables.get(name + str(type.value),None)
                 if toCall != None:
                     toCall(value,value2)
 
             elif type == remotemeStruct.VariableType.DOUBLE:
                 value = reader.readDouble()
-                toCall = self.__observables[name + str(type.value)]
+                toCall = self.__observables.get(name + str(type.value),None)
                 if toCall != None:
                     toCall(value)
 
             elif type == remotemeStruct.VariableType.TEXT_2:
                 value = reader.readString()
                 value2 = reader.readString()
-                toCall = self.__observables[name + str(type.value)]
+                toCall = self.__observables.get(name + str(type.value),None)
                 if toCall != None:
                     toCall(value,value2)
-
+            elif type == remotemeStruct.VariableType.SMALL_INTEGER_2_TEXT_2:
+                value = reader.readInt16()
+                value2 = reader.readInt16()
+                value3 = reader.readString()
+                value4 = reader.readString()
+                toCall = self.__observables.get(name + str(type.value),None)
+                if toCall != None:
+                    toCall(value, value2,value3,value4)
 
     def setBoolean(self,name,value,ignoreCurrent=False):
         writer = RemoteMeDataWriter()
@@ -157,12 +164,23 @@ class Variables:
         self.__remoteMe.send(
             remotemeMessages.getVariableChangeMessage(self.__remoteMe.getDeviceId(), ignoreCurrent, writer.getBytes()))
 
-    def setText2(self,name, value, value2, ignoreCurrent=False):
+    def setText2(self, name, value, value2, ignoreCurrent=False):
         writer = RemoteMeDataWriter()
         writer.writeUInt16(remotemeStruct.VariableType.TEXT_2._value_)
         writer.writeString(name)
         writer.writeString(value)
         writer.writeString(value2)
+        self.__remoteMe.send(
+            remotemeMessages.getVariableChangeMessage(self.__remoteMe.getDeviceId(), ignoreCurrent, writer.getBytes()))
+
+    def setSmallInteger2Text2(self, name, value, value2,value3,value4, ignoreCurrent=False):
+        writer = RemoteMeDataWriter()
+        writer.writeUInt16(remotemeStruct.VariableType.SMALL_INTEGER_2_TEXT_2._value_)
+        writer.writeString(name)
+        writer.writeInt16(value)
+        writer.writeInt16(value2)
+        writer.writeString(value3)
+        writer.writeString(value4)
         self.__remoteMe.send(
             remotemeMessages.getVariableChangeMessage(self.__remoteMe.getDeviceId(), ignoreCurrent, writer.getBytes()))
 
@@ -191,6 +209,8 @@ class Variables:
     def observeText2(self, name, onChange):
         self.__observe(name, remotemeStruct.VariableType.TEXT_2, onChange)
 
+    def observeSmallInteger2Text2(self, name, onChange):
+        self.__observe(name, remotemeStruct.VariableType.SMALL_INTEGER_2_TEXT_2, onChange)
 
     def __observe(self, name, type, onChange):
         size = 2 + 2 + 2 + len(name) + 1
