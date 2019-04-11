@@ -37,13 +37,14 @@ class RemoteMe(metaclass=Singleton):
         self.__logger.info('creating an instance of RemoteMe')
 
     def __readFromSocket(self):
+        concesousErrors = 0
         while self.__socketObj is not None :
             try:
                 header = self.__socketObj.recv(4)
                 if (len(header) == 4):
                     [messageType, size] = struct.unpack(">hh", header)
                     messageType = remotemeStruct.MessageType(messageType)
-                    self.__logger.info("got message type {} size:{}".format(messageType,size));
+                    self.__logger.info("got message type {} size:{}".format(messageType,size))
                     data = self.__socketObj.recv(size)
                     if (len(data) == size):
                         if (messageType == remotemeStruct.MessageType.USER_MESSAGE):
@@ -67,9 +68,13 @@ class RemoteMe(metaclass=Singleton):
 
                         else:
                             print('PYTHON wrong data type {} '.format(messageType))
+                concesousErrors = 0
             except:
                 self.__logger.exception("error while processing message")
-                exit(0)
+                concesousErrors = concesousErrors+1
+                if concesousErrors>5 :
+                    self.__logger.error("more then 10 errors exit")
+                    exit(0)
         print("PYTHON end loop")
 
 
@@ -183,6 +188,9 @@ class RemoteMe(metaclass=Singleton):
 
     def logServerError(self, message):
         self.send(remotemeMessages.getLogMessage(remotemeStruct.LogLevel.ERROR, message))
+
+    def sendPushNotificationMessage(self, webPageDeviceId,title,body,badge,icon,image,vibrate=None):
+        self.send(remotemeMessages.getPushNotificationMessage(webPageDeviceId,title,body,badge,icon,image,vibrate))
 
     def wait(self):
         self.__threadRead.join()

@@ -48,6 +48,37 @@ def getWebRtcMessage(data):
 
 
 
+def getPushNotificationMessage(webPageDeviceId,title,body,badge,icon,image,vibrate=None):
+    if vibrate is None:
+        vibrate = []
+
+    stringSize=0
+    stringSize += len(getByteArray(title))
+    stringSize += len(getByteArray(body))
+    stringSize += len(getByteArray(badge))
+    stringSize += len(getByteArray(icon))
+    stringSize += len(getByteArray(image))
+
+    size = 2 + 5 + stringSize + 1 + len(vibrate)
+
+    writer = RemoteMeDataWriter()
+    writer.writeUInt16(remotemeStruct.MessageType.SEND_PUSH_NOTIFICATION._value_)
+    writer.writeUInt16(size)
+
+    writer.writeUInt16(webPageDeviceId)
+
+    writer.writeString(title)
+    writer.writeString(body)
+    writer.writeString(badge)
+    writer.writeString(icon)
+    writer.writeString(image)
+    writer.writeUInt16(len(vibrate))
+
+    for x in vibrate:
+        writer.writeUInt8(x/10)
+
+    return writer.getBytes()
+
 
 def getLogMessage(logLevel,message):
     byteArray = getByteArray(message)
