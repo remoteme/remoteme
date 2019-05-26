@@ -24,7 +24,8 @@ class MessageType(Enum):
     REGISTER_CHILD_DEVICE=201
     ADD_DATA=300
     LOG=20000
-    SYSTEM_MESSAGE=20001
+    SYSTEM_MESSAGE=20001,
+    CONNECTION_CHANGE=30001
 
 class VariableType(Enum):
     BOOLEAN=0
@@ -42,6 +43,13 @@ class LogLevel(Enum):
     WARN = 2
     ERROR = 3
 
+class ConnectionState(Enum):
+    CONNECTING = 0
+    CONNECTED = 1
+    DISCONNECTED = 2
+    FAILED = 3
+    DISCONNECTING = 4
+    CHECKING = 5
 
 class AddDataMessageSetting(Enum):
     NO_ROUND = 0

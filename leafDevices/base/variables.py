@@ -27,15 +27,15 @@ class Variables:
         # data and type already took
 
 
-        senderDeviceId = reader.readInt16()
-        receiverDeviceId = reader.readInt16()
+        senderDeviceId = reader.readUInt16()
+        receiverDeviceId = reader.readUInt16()
 
-        count = reader.readInt16()
+        count = reader.readUInt16()
 
         while count != 0:
             count = count-1
 
-            type = remotemeStruct.VariableType(reader.readInt16())
+            type = remotemeStruct.VariableType(reader.readUInt16())
             name = reader.readString()
 
             self.__logger.info("type:{} name:{} is bool {}".format(type, name,(type ==remotemeStruct.VariableType.BOOLEAN) ))

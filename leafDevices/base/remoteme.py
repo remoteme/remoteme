@@ -10,7 +10,7 @@ import remotemeStruct
 import logging
 
 from variables import Variables
-
+from remoteMeDataReader import RemoteMeDataReader
 
 
 class Singleton(type):
@@ -26,6 +26,8 @@ class RemoteMe(metaclass=Singleton):
     __userMessageListener=None
     __userSyncMessageListener=None
 
+    __onWebRtcConnectionChangeListeners=[]
+    __onWebsocketConnectionChangeListeners = []
 
     __socketObj = None
     __ownId = None
@@ -65,6 +67,8 @@ class RemoteMe(metaclass=Singleton):
                                 print('PYTHON wrong deviceId :{} '.format(receiverDeviceId))
                         elif messageType == remotemeStruct.MessageType.VARIABLE_CHANGE_PROPAGATE_MESSAGE:
                             self.getVariables().__onVariableChangePropagate(data)
+                        elif messageType == remotemeStruct.MessageType.CONNECTION_CHANGE:
+                            self.__onConnectionChange(data)
 
                         else:
                             print('PYTHON wrong data type {} '.format(messageType))
@@ -110,8 +114,22 @@ class RemoteMe(metaclass=Singleton):
         else:
             self.__logger.warning("got user sync message but no function to process was set")
 
+    def __onConnectionChange(self,data):
+        reader = RemoteMeDataReader(data)
 
+        # data and type already took
 
+        deviceId = reader.readUInt16()
+        type = reader.readUInt8()#  type 1 = weboscket type 2 = webrtc
+        state = remotemeStruct.ConnectionState(reader.readUInt8())
+
+        if type == 1:
+            for toCall in self.__onWebsocketConnectionChangeListeners:
+                toCall(state)
+
+        elif type == 2:
+            for toCall in self.__onWebRtcConnectionChangeListeners:
+                toCall(state)
 
     def send(self,message):
         self.__socketObj.sendall(message)
@@ -173,6 +191,12 @@ class RemoteMe(metaclass=Singleton):
 
     def setUserSyncMessageListener(self, function):
         self.__userSyncMessageListener=function
+
+    def addWebRtcConnectionChangeListener(self, function):
+        self.__onWebRtcConnectionChangeListeners.append(function)
+
+    def addWebsocketConnectionChangeListener(self, function):
+        self.__onWebsocketConnectionChangeListeners.append(function)
 
     def sendUserMessage(self,receiveDeviceId,data):
         self.send(remotemeMessages.getUserMessage(remotemeStruct.UserMessageSettings.NO_RENEWAL, receiveDeviceId, self.__ownId, 0, data))
