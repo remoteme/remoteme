@@ -11,7 +11,7 @@ import logging
 
 from variables import Variables
 from remoteMeDataReader import RemoteMeDataReader
-
+from functionCaller import FunctionCaller
 
 class Singleton(type):
     _instances = {}
@@ -36,7 +36,7 @@ class RemoteMe(metaclass=Singleton):
 
     def __init__(self):
         self.__logger = logging.getLogger('remoteMe.RemoteMe')
-        self.__logger.info('creating an instance of RemoteMe')
+        self.__logger.debug('creating an instance of RemoteMe')
 
     def __readFromSocket(self):
         concesousErrors = 0
@@ -46,27 +46,74 @@ class RemoteMe(metaclass=Singleton):
                 if (len(header) == 4):
                     [messageType, size] = struct.unpack(">hh", header)
                     messageType = remotemeStruct.MessageType(messageType)
-                    self.__logger.info("got message type {} size:{}".format(messageType,size))
+                    self.__logger.debug("got message type {} size:{}".format(messageType,size))
                     data = self.__socketObj.recv(size)
                     if (len(data) == size):
+                        self.__logger.debug('Python message received')
                         if (messageType == remotemeStruct.MessageType.USER_MESSAGE):
-                            [userMessageSettings, receiverDeviceId, senderDeviceId, messageId, data] = struct.unpack(
-                                ">Bhhh{0}s".format(size - remotemeStruct.USER_DATA_HEADEARS_SIZE), data)
-                            userMessageSettings = remotemeStruct.UserMessageSettings(userMessageSettings)#for later use
+
+                            userMessageSettings = remotemeStruct.UserMessageSettings( reader.readUInt8())  # for later use
+                            receiverDeviceId = reader.readUInt16()
+                            senderDeviceId = reader.readUInt16()
+                            messageId = reader.readUInt16()
+                            data = reader.readRest()
+
+
                             if (self.__ownId==receiverDeviceId):
                                 self.__onUserMessage(userMessageSettings,senderDeviceId, messageId, data)
                             else:
                                 print('PYTHON wrong deviceId :{} '.format(receiverDeviceId))
+
+                        elif (messageType == remotemeStruct.MessageType.USER_MESSAGE_WEBPAGE_TOKEN):
+
+                            reader = RemoteMeDataReader(data)
+
+                            # data and type already took
+
+                            userMessageSettings = remotemeStruct.UserMessageSettings(reader.readUInt8())  # for later use
+                            receiverDeviceId = reader.readUInt16()
+                            senderDeviceId = reader.readUInt16()
+                            sessionId = reader.readUInt16()
+                            credit = reader.readUInt16()
+                            time = reader.readUInt16()
+                            data = reader.readRest()
+
+                            if (self.__ownId == receiverDeviceId):
+                                self.__onUserMessage(userMessageSettings, senderDeviceId, 0, data,sessionId,credit,time)
+                            else:
+                                print('PYTHON wrong deviceId :{} '.format(receiverDeviceId))
+
                         elif messageType == remotemeStruct.MessageType.USER_SYNC_MESSAGE:
-                            self.__logger.info("expected size of bytes {} data length:{}".format(size - remotemeStruct.USER_SYNC_DATA_HEADEARS_SIZE,len(data)));
-                            [receiverDeviceId, senderDeviceId, messageId, data] = struct.unpack(
-                                ">hhQ{0}s".format(size - remotemeStruct.USER_SYNC_DATA_HEADEARS_SIZE), data)
+                            self.__logger.debug("expected size of bytes {} data length:{}".format(size - remotemeStruct.USER_SYNC_DATA_HEADEARS_SIZE,len(data)));
+
+                            receiverDeviceId=reader.readUInt16()
+                            senderDeviceId=reader.readUInt16()
+                            messageId=reader.readUInt64()
+                            data= reader.readRest()
                             if (self.__ownId==receiverDeviceId):
                                 self.__onSyncMessage(senderDeviceId, messageId, data)
                             else:
                                 print('PYTHON wrong deviceId :{} '.format(receiverDeviceId))
-                        elif messageType == remotemeStruct.MessageType.VARIABLE_CHANGE_PROPAGATE_MESSAGE:
-                            self.getVariables().__onVariableChangePropagate(data)
+
+                        elif messageType == remotemeStruct.MessageType.USER_SYNC_MESSAGE_WEBPAGE_TOKEN:
+                            self.__logger.debug("expected size of bytes {} data length:{}".format(
+                                size - remotemeStruct.USER_SYNC_DATA_HEADEARS_SIZE, len(data)))
+
+                            receiverDeviceId = reader.readUInt16()
+                            senderDeviceId = reader.readUInt16()
+
+                            sessionId = reader.readUInt16()
+                            credit = reader.readUInt16()
+                            time = reader.readUInt16()
+
+                            messageId = reader.readUInt64()
+                            data = reader.readRest()
+                            if (self.__ownId == receiverDeviceId):
+                                self.__onSyncMessage(senderDeviceId, messageId, data,sessionId,credit,time)
+                            else:
+                                print('PYTHON wrong deviceId :{} '.format(receiverDeviceId))
+                        elif messageType in (remotemeStruct.MessageType.VARIABLE_CHANGE_PROPAGATE_MESSAGE, remotemeStruct.MessageType.VARIABLE_CHANGE_PROPAGATE_MESSAGE_WEBPAGE_TOKEN):
+                            self.getVariables().__onVariableChangePropagate(data,messageType)
                         elif messageType == remotemeStruct.MessageType.CONNECTION_CHANGE:
                             self.__onConnectionChange(data)
 
@@ -92,25 +139,31 @@ class RemoteMe(metaclass=Singleton):
     def __toHexString(self,array):
         return (''.join('{:02x} '.format(x) for x in array))
 
-    def __onUserMessage(self,userMessageSettings,senderDeviceId,messageId,data):
-        self.__logger.debug("got user sender deviceId:{} datalen:{} data: {} ".format(senderDeviceId , len(data),self.__toHexString(data)))
+    def __onUserMessage(self,userMessageSettings,senderDeviceId,messageId,data,sessionId=None,credit=None,time=None):
+        self.__logger.debug("got user message sender deviceId:{} deviceSession:{} credit:{} time:{} datalen:{} data: {} ".format(senderDeviceId,sessionId,credit,time , len(data),self.__toHexString(data)))
         if self.__userMessageListener is not None:
-            self.__userMessageListener(senderDeviceId,data)
+            if self.__userMessageListener.paramCount == 2:
+                self.__userMessageListener.toCall(senderDeviceId,data)
+            else:
+                self.__userMessageListener.toCall(senderDeviceId,data,sessionId,credit,time)
+
         else:
             self.__logger.warning("got user message but no function to process was set")
 
-    def __onSyncMessage(self,senderDeviceId,messageId, data):
-        self.__logger.debug("got user sync sender senderDeviceId:{} messageId:{} datalen:{} data: {} ".format(senderDeviceId, messageId, len(data),self.__toHexString(data)))
+    def __onSyncMessage(self,senderDeviceId,messageId, data,sessionId=None,credit=None,time=None):
+        self.__logger.debug("got user sync sender senderDeviceId:{} deviceSession:{} credit:{} time:{} messageId:{} datalen:{} data: {} ".format(senderDeviceId,sessionId,credit,time, messageId, len(data),self.__toHexString(data)))
         response=None
 
         if self.__userSyncMessageListener is not None:
-            response = self.__userSyncMessageListener(senderDeviceId, data)
+            if self.__userMessageListener.paramCount == 2:
+                response = self.__userSyncMessageListener.toCall(senderDeviceId, data)
+            else:
+                response = self.__userSyncMessageListener.toCall(senderDeviceId, data, sessionId, credit, time)
 
             if response is None:
                 response=[]
 
-            responseMessage = remotemeMessages.getSyncResponseMessage(messageId,response)
-            self.send(responseMessage)
+            self.send(remotemeMessages.getSyncResponseMessage(messageId,response))
         else:
             self.__logger.warning("got user sync message but no function to process was set")
 
@@ -138,7 +191,7 @@ class RemoteMe(metaclass=Singleton):
         self.__socketObj.sendall(message)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.__logger.info("Exit remoteme python with id {}".format(self.__ownId))
+        self.__logger.debug("Exit remoteme python with id {}".format(self.__ownId))
         if self.__socketObj is not None:
             self.__socketObj.close()
             self.__socketObj = None
@@ -159,8 +212,8 @@ class RemoteMe(metaclass=Singleton):
             self.startRemoteMeDirect(port,parentId,ownId,name)
 
         else:
-            self.__logger.info("usable working dir parentId ownId port deviceName")
-            self.__logger.info("got parameters {} : {}".format(len(sysargv), sysargv))
+            self.__logger.debug("usable working dir parentId ownId port deviceName")
+            self.__logger.debug("got parameters {} : {}".format(len(sysargv), sysargv))
             exit(1)
 
     def getDeviceId(self):
@@ -172,7 +225,7 @@ class RemoteMe(metaclass=Singleton):
             return
 
 
-        self.__logger.info("starting remogemeMe port:{} parentId:{} ownId:{} name:{}".format(port, parentId, ownId,name))
+        self.__logger.debug("starting remogemeMe port:{} parentId:{} ownId:{} name:{}".format(port, parentId, ownId,name))
         self.__ownId = ownId
 
         self.__socketObj = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -184,13 +237,13 @@ class RemoteMe(metaclass=Singleton):
 
         self.send(remotemeMessages.getRegisterLeafDeviceMessage(parentId, self.__ownId, name,
                                                                   remotemeStruct.LeafDeviceType.LD_EXTERNAL_SCRIPT))
-        self.__logger.info("deivice has been regieteres at parent id:{} name:{} ".format(self.__ownId,name))
+        self.__logger.debug("deivice has been regieteres at parent id:{} name:{} ".format(self.__ownId,name))
 
     def setUserMessageListener(self, function):
-        self.__userMessageListener=function
+        self.__userMessageListener= FunctionCaller(function)
 
     def setUserSyncMessageListener(self, function):
-        self.__userSyncMessageListener=function
+        self.__userSyncMessageListener= FunctionCaller(function)
 
     def addWebRtcConnectionChangeListener(self, function):
         self.__onWebRtcConnectionChangeListeners.append(function)
@@ -215,6 +268,9 @@ class RemoteMe(metaclass=Singleton):
 
     def sendPushNotificationMessage(self, webPageDeviceId,title,body,badge,icon,image,vibrate=None):
         self.send(remotemeMessages.getPushNotificationMessage(webPageDeviceId,title,body,badge,icon,image,vibrate))
+
+    def sendDecreaseWebPageTokenCreditMessage(self, sessionId, credit,time):
+        self.send(remotemeMessages.getDecreaseWebPageTokenCreditMessage(self.__ownId, sessionId,credit, time))
 
     def wait(self):
         self.__threadRead.join()

@@ -8,6 +8,11 @@ import remotemeMessages
 
 from remoteMeDataReader import RemoteMeDataReader
 from remoteMeDataWriter import RemoteMeDataWriter
+from functionCaller import FunctionCaller
+
+
+
+
 
 class Variables:
     __observables = {}
@@ -17,18 +22,26 @@ class Variables:
         self.__remoteMe=remoteMe
 
         self.__logger = logging.getLogger('Variables')
-        self.__logger.info('creating an instance of Variables')
+        self.__logger.debug('creating an instance of Variables')
 
 
 
-    def _RemoteMe__onVariableChangePropagate(self,data):
+    def _RemoteMe__onVariableChangePropagate(self,data,messageType):
         reader = RemoteMeDataReader(data)
 
         # data and type already took
 
-
         senderDeviceId = reader.readUInt16()
         receiverDeviceId = reader.readUInt16()
+
+        if messageType == remotemeStruct.MessageType.VARIABLE_CHANGE_PROPAGATE_MESSAGE_WEBPAGE_TOKEN:
+            sessionId = reader.readUInt16()
+            credit = reader.readUInt16()
+            time = reader.readUInt16()
+        else:
+            sessionId = None
+            credit = None
+            time = None
 
         count = reader.readUInt16()
 
@@ -38,73 +51,100 @@ class Variables:
             type = remotemeStruct.VariableType(reader.readUInt16())
             name = reader.readString()
 
-            self.__logger.info("type:{} name:{} is bool {}".format(type, name,(type ==remotemeStruct.VariableType.BOOLEAN) ))
+            self.__logger.debug("type:{} name:{} is bool {}".format(type, name,(type ==remotemeStruct.VariableType.BOOLEAN) ))
 
             if type ==remotemeStruct.VariableType.BOOLEAN:
                 value = reader.readInt8()==1
-                self.__logger.info("try to call {} {}".format(name,value))
+                self.__logger.debug("try to call {} {}".format(name,value))
                 toCall= self.__observables.get(name + str(type.value),None)
-                if toCall != None:
-                    toCall(value)
+                if toCall is not None:
+                    if toCall.paramCount ==1:
+                        toCall.toCall(value)
+                    else:
+                        toCall.toCall(value,sessionId,credit,time)
                 else:
-                    self.__logger.info("ddint found caller")
+                    self.__logger.debug("ddint found caller")
 
-            elif type ==remotemeStruct.VariableType.INTEGER:
+            elif type == remotemeStruct.VariableType.INTEGER:
                 value = reader.readInt32()
                 toCall = self.__observables.get(name + str(type.value),None)
-                if toCall != None:
-                    toCall(value)
+                if toCall is not None:
+                    if toCall.paramCount == 1:
+                        toCall.toCall(value)
+                    else:
+                        toCall.toCall(value, sessionId, credit, time)
 
             elif type == remotemeStruct.VariableType.TEXT:
                 value = reader.readString()
                 toCall = self.__observables.get(name + str(type.value),None)
-                if toCall != None:
-                    toCall(value)
+                if toCall is not None:
+                    if toCall.paramCount == 1:
+                        toCall.toCall(value)
+                    else:
+                        toCall.toCall(value, sessionId, credit, time)
 
             elif type == remotemeStruct.VariableType.SMALL_INTEGER_3:
                 value = reader.readInt16()
                 value2 = reader.readInt16()
                 value3 = reader.readInt16()
                 toCall = self.__observables.get(name + str(type.value),None)
-                if toCall != None:
-                    toCall(value,value2,value3)
-
+                if toCall is not None:
+                    if toCall.paramCount == 3:
+                        toCall.toCall(value, value2,value3)
+                    else:
+                        toCall.toCall(value, value2,value3, sessionId, credit, time)
 
             elif type == remotemeStruct.VariableType.SMALL_INTEGER_2:
                 value = reader.readInt16()
                 value2 = reader.readInt16()
 
                 toCall = self.__observables.get(name + str(type.value),None)
-                if toCall != None:
-                    toCall(value,value2)
+                if toCall is not None:
+                    if toCall.paramCount == 2:
+                        toCall.toCall(value, value2)
+                    else:
+                        toCall.toCall(value, value2, sessionId, credit, time)
 
             elif type == remotemeStruct.VariableType.INTEGER_BOOLEAN:
                 value = reader.readInt32()
                 value2 =reader.readInt8()==1
                 toCall = self.__observables.get(name + str(type.value),None)
-                if toCall != None:
-                    toCall(value,value2)
+                if toCall is not None:
+                    if toCall.paramCount == 2:
+                        toCall.toCall(value, value2)
+                    else:
+                        toCall.toCall(value, value2, sessionId, credit, time)
 
             elif type == remotemeStruct.VariableType.DOUBLE:
                 value = reader.readDouble()
                 toCall = self.__observables.get(name + str(type.value),None)
-                if toCall != None:
-                    toCall(value)
+                if toCall is not None:
+                    if toCall.paramCount == 1:
+                        toCall.toCall(value)
+                    else:
+                        toCall.toCall(value, sessionId, credit, time)
 
             elif type == remotemeStruct.VariableType.TEXT_2:
                 value = reader.readString()
                 value2 = reader.readString()
                 toCall = self.__observables.get(name + str(type.value),None)
-                if toCall != None:
-                    toCall(value,value2)
+                if toCall is not None:
+                    if toCall.paramCount == 2:
+                        toCall.toCall(value, value2)
+                    else:
+                        toCall.toCall(value, value2, sessionId, credit, time)
+
             elif type == remotemeStruct.VariableType.SMALL_INTEGER_2_TEXT_2:
                 value = reader.readInt16()
                 value2 = reader.readInt16()
                 value3 = reader.readString()
                 value4 = reader.readString()
                 toCall = self.__observables.get(name + str(type.value),None)
-                if toCall != None:
-                    toCall(value, value2,value3,value4)
+                if toCall is not None:
+                    if toCall.paramCount == 4:
+                        toCall.toCall(value, value2,value3,value4)
+                    else:
+                        toCall.toCall(value, value2,value3,value4, sessionId, credit, time)
 
     def setBoolean(self,name,value,ignoreCurrent=False):
         writer = RemoteMeDataWriter()
@@ -223,10 +263,13 @@ class Variables:
         wr.writeInt16(type.value)
         wr.writeString(name)
 
-        self.__logger.info("sending variable {} type:{}".format(name,type))
+        self.__logger.debug("sending variable {} type:{}".format(name,type))
         self.__remoteMe.send(wr.getBytes())
 
-        self.__observables[name+str(type.value)]=onChange
+        self.__observables[name+str(type.value)]=FunctionCaller(onChange)
+
+
+
 
     def __sendNow(self,name,type):
         size = 2 + 2 + 2 + len(name) + 1
@@ -240,7 +283,6 @@ class Variables:
         wr.writeInt16(type.value)
         wr.writeString(name)
 
-        self.__logger.info("sending variable {} type:{}".format(name, type))
+        self.__logger.debug("sending variable {} type:{}".format(name, type))
         self.__remoteMe.send(wr.getBytes())
 
-        self.__observables[name + str(type.value)] = onChange

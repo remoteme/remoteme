@@ -39,11 +39,15 @@ class RemoteMeDataReader:
     def readData(self, size):
         dataRet = []
 
+
         while size != 0:
             dataRet.append(self.readUInt8())
             size = size - 1
 
         return dataRet
+
+    def readRest(self):
+        return self.readData(len(self.data)-self.offset)
 
     def readUInt8(self):
         [ret] = struct.unpack_from(">B", self.data, self.offset)
@@ -68,6 +72,11 @@ class RemoteMeDataReader:
     def readUInt32(self):
         [ret] = struct.unpack_from(">I", self.data, self.offset)
         self.offset += struct.calcsize(">I")
+        return ret
+
+    def readUInt64(self):
+        [ret] = struct.unpack_from(">Q", self.data, self.offset)
+        self.offset += struct.calcsize(">Q")
         return ret
 
     def readDouble(self):

@@ -48,6 +48,20 @@ def getWebRtcMessage(data):
 
 
 
+def getDecreaseWebPageTokenCreditMessage(senderDeviceId,sessionId,  credit,time):
+    writer = RemoteMeDataWriter()
+    writer.writeUInt16(remotemeStruct.MessageType.DECREASE_WEBPAGE_TOKEN_CREDIT._value_)
+    writer.writeUInt16(8)
+
+    writer.writeUInt16(senderDeviceId)
+    writer.writeUInt16(sessionId)
+    writer.writeInt16(credit)
+    writer.writeInt16(time)
+
+
+
+    return writer.getBytes()
+
 def getPushNotificationMessage(webPageDeviceId,title,body,badge,icon,image,vibrate=None):
     if vibrate is None:
         vibrate = []
