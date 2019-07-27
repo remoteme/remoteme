@@ -34,14 +34,14 @@ def ask(question):
 
 def installPsUtil():
     print("installing ps util it can take a while ...")
-    os.system('sudo python3.5 -m pip install psutil')
+    os.system('sudo python3 -m pip install psutil')
     print(bcolors.OKGREEN + "INSTALLED" + bcolors.ENDC)
     pass
 
 
 def isntallAdafruitPWM():
     print("installing adafruit-pca9685 it can take a while ...")
-    os.system('sudo python3.5 -m pip install adafruit-pca9685')
+    os.system('sudo python3 -m pip install adafruit-pca9685')
     print(bcolors.OKGREEN + "INSTALLED" + bcolors.ENDC)
     pass
 
