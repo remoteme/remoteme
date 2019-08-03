@@ -74,12 +74,13 @@ class RemoteMe(metaclass=Singleton):
                             receiverDeviceId = reader.readUInt16()
                             senderDeviceId = reader.readUInt16()
                             sessionId = reader.readUInt16()
+                            identifier = reader.readUInt16()
                             credit = reader.readUInt16()
                             time = reader.readUInt16()
                             data = reader.readRest()
 
                             if (self.__ownId == receiverDeviceId):
-                                self.__onUserMessage(userMessageSettings, senderDeviceId, 0, data,sessionId,credit,time)
+                                self.__onUserMessage(userMessageSettings, senderDeviceId, 0, data,sessionId,identifier,credit,time)
                             else:
                                 print('PYTHON wrong deviceId :{} '.format(receiverDeviceId))
 
@@ -103,13 +104,14 @@ class RemoteMe(metaclass=Singleton):
                             senderDeviceId = reader.readUInt16()
 
                             sessionId = reader.readUInt16()
+                            identifier = reader.readUInt16()
                             credit = reader.readUInt16()
                             time = reader.readUInt16()
 
                             messageId = reader.readUInt64()
                             data = reader.readRest()
                             if (self.__ownId == receiverDeviceId):
-                                self.__onSyncMessage(senderDeviceId, messageId, data,sessionId,credit,time)
+                                self.__onSyncMessage(senderDeviceId, messageId, data,sessionId,identifier,credit,time)
                             else:
                                 print('PYTHON wrong deviceId :{} '.format(receiverDeviceId))
                         elif messageType in (remotemeStruct.MessageType.VARIABLE_CHANGE_PROPAGATE_MESSAGE, remotemeStruct.MessageType.VARIABLE_CHANGE_PROPAGATE_MESSAGE_WEBPAGE_TOKEN):
@@ -139,26 +141,26 @@ class RemoteMe(metaclass=Singleton):
     def __toHexString(self,array):
         return (''.join('{:02x} '.format(x) for x in array))
 
-    def __onUserMessage(self,userMessageSettings,senderDeviceId,messageId,data,sessionId=None,credit=None,time=None):
-        self.__logger.debug("got user message sender deviceId:{} deviceSession:{} credit:{} time:{} datalen:{} data: {} ".format(senderDeviceId,sessionId,credit,time , len(data),self.__toHexString(data)))
+    def __onUserMessage(self,userMessageSettings,senderDeviceId,messageId,data,sessionId=None,identifier=None,credit=None,time=None):
+        self.__logger.debug("got user message sender deviceId:{} deviceSession:{} identifier:{} credit:{} time:{} datalen:{} data: {} ".format(senderDeviceId,sessionId,identifier,credit,time , len(data),self.__toHexString(data)))
         if self.__userMessageListener is not None:
             if self.__userMessageListener.paramCount == 2:
                 self.__userMessageListener.toCall(senderDeviceId,data)
             else:
-                self.__userMessageListener.toCall(senderDeviceId,data,sessionId,credit,time)
+                self.__userMessageListener.toCall(senderDeviceId,data,sessionId,identifier,credit,time)
 
         else:
             self.__logger.warning("got user message but no function to process was set")
 
-    def __onSyncMessage(self,senderDeviceId,messageId, data,sessionId=None,credit=None,time=None):
-        self.__logger.debug("got user sync sender senderDeviceId:{} deviceSession:{} credit:{} time:{} messageId:{} datalen:{} data: {} ".format(senderDeviceId,sessionId,credit,time, messageId, len(data),self.__toHexString(data)))
+    def __onSyncMessage(self,senderDeviceId,messageId, data,sessionId=None,identifier=None,credit=None,time=None):
+        self.__logger.debug("got user sync sender senderDeviceId:{} deviceSession:{} identifier:{} credit:{} time:{} messageId:{} datalen:{} data: {} ".format(senderDeviceId,sessionId,identifier,credit,time, messageId, len(data),self.__toHexString(data)))
         response=None
 
         if self.__userSyncMessageListener is not None:
             if self.__userMessageListener.paramCount == 2:
                 response = self.__userSyncMessageListener.toCall(senderDeviceId, data)
             else:
-                response = self.__userSyncMessageListener.toCall(senderDeviceId, data, sessionId, credit, time)
+                response = self.__userSyncMessageListener.toCall(senderDeviceId, data, sessionId,identifier, credit, time)
 
             if response is None:
                 response=[]

@@ -36,10 +36,12 @@ class Variables:
 
         if messageType == remotemeStruct.MessageType.VARIABLE_CHANGE_PROPAGATE_MESSAGE_WEBPAGE_TOKEN:
             sessionId = reader.readUInt16()
+            identifier = reader.readUInt16()
             credit = reader.readUInt16()
             time = reader.readUInt16()
         else:
             sessionId = None
+            identifier = None
             credit = None
             time = None
 
@@ -61,7 +63,7 @@ class Variables:
                     if toCall.paramCount ==1:
                         toCall.toCall(value)
                     else:
-                        toCall.toCall(value,sessionId,credit,time)
+                        toCall.toCall(value,sessionId,identifier,credit,time)
                 else:
                     self.__logger.debug("ddint found caller")
 
@@ -72,7 +74,7 @@ class Variables:
                     if toCall.paramCount == 1:
                         toCall.toCall(value)
                     else:
-                        toCall.toCall(value, sessionId, credit, time)
+                        toCall.toCall(value, sessionId,identifier, credit, time)
 
             elif type == remotemeStruct.VariableType.TEXT:
                 value = reader.readString()
@@ -81,7 +83,7 @@ class Variables:
                     if toCall.paramCount == 1:
                         toCall.toCall(value)
                     else:
-                        toCall.toCall(value, sessionId, credit, time)
+                        toCall.toCall(value, sessionId,identifier, credit, time)
 
             elif type == remotemeStruct.VariableType.SMALL_INTEGER_3:
                 value = reader.readInt16()
@@ -92,7 +94,7 @@ class Variables:
                     if toCall.paramCount == 3:
                         toCall.toCall(value, value2,value3)
                     else:
-                        toCall.toCall(value, value2,value3, sessionId, credit, time)
+                        toCall.toCall(value, value2,value3, sessionId,identifier, credit, time)
 
             elif type == remotemeStruct.VariableType.SMALL_INTEGER_2:
                 value = reader.readInt16()
@@ -103,7 +105,7 @@ class Variables:
                     if toCall.paramCount == 2:
                         toCall.toCall(value, value2)
                     else:
-                        toCall.toCall(value, value2, sessionId, credit, time)
+                        toCall.toCall(value, value2, sessionId,identifier, credit, time)
 
             elif type == remotemeStruct.VariableType.INTEGER_BOOLEAN:
                 value = reader.readInt32()
@@ -113,7 +115,7 @@ class Variables:
                     if toCall.paramCount == 2:
                         toCall.toCall(value, value2)
                     else:
-                        toCall.toCall(value, value2, sessionId, credit, time)
+                        toCall.toCall(value, value2, sessionId,identifier, credit, time)
 
             elif type == remotemeStruct.VariableType.DOUBLE:
                 value = reader.readDouble()
@@ -122,7 +124,7 @@ class Variables:
                     if toCall.paramCount == 1:
                         toCall.toCall(value)
                     else:
-                        toCall.toCall(value, sessionId, credit, time)
+                        toCall.toCall(value, sessionId,identifier, credit, time)
 
             elif type == remotemeStruct.VariableType.TEXT_2:
                 value = reader.readString()
@@ -132,7 +134,7 @@ class Variables:
                     if toCall.paramCount == 2:
                         toCall.toCall(value, value2)
                     else:
-                        toCall.toCall(value, value2, sessionId, credit, time)
+                        toCall.toCall(value, value2, sessionId,identifier, credit, time)
 
             elif type == remotemeStruct.VariableType.SMALL_INTEGER_2_TEXT_2:
                 value = reader.readInt16()
@@ -144,7 +146,7 @@ class Variables:
                     if toCall.paramCount == 4:
                         toCall.toCall(value, value2,value3,value4)
                     else:
-                        toCall.toCall(value, value2,value3,value4, sessionId, credit, time)
+                        toCall.toCall(value, value2,value3,value4, sessionId,identifier, credit, time)
 
     def setBoolean(self,name,value,ignoreCurrent=False):
         writer = RemoteMeDataWriter()
