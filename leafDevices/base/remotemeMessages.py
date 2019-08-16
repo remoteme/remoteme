@@ -48,9 +48,9 @@ def getWebRtcMessage(data):
 
 
 
-def getDecreaseWebPageTokenCreditMessage(senderDeviceId,sessionId,  credit,time):
+def getDecreaseGuestKeyCreditAndTimeMessage(senderDeviceId,sessionId,  credit,time):
     writer = RemoteMeDataWriter()
-    writer.writeUInt16(remotemeStruct.MessageType.DECREASE_WEBPAGE_TOKEN_CREDIT._value_)
+    writer.writeUInt16(remotemeStruct.MessageType.DECREASE_GUEST_CREDIT_AND_TIME._value_)
     writer.writeUInt16(8)
 
     writer.writeUInt16(senderDeviceId)

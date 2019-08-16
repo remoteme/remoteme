@@ -271,8 +271,8 @@ class RemoteMe(metaclass=Singleton):
     def sendPushNotificationMessage(self, webPageDeviceId,title,body,badge,icon,image,vibrate=None):
         self.send(remotemeMessages.getPushNotificationMessage(webPageDeviceId,title,body,badge,icon,image,vibrate))
 
-    def sendDecreaseWebPageTokenCreditMessage(self, sessionId, credit,time):
-        self.send(remotemeMessages.getDecreaseWebPageTokenCreditMessage(self.__ownId, sessionId,credit, time))
+    def sendDecreaseGuestKeyCreditAndTimeMessage(self, sessionId, credit,time):
+        self.send(remotemeMessages.getDecreaseGuestKeyCreditAndTimeMessage(self.__ownId, sessionId,credit, time))
 
     def wait(self):
         self.__threadRead.join()
