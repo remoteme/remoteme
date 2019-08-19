@@ -62,6 +62,14 @@ def getDecreaseGuestKeyCreditAndTimeMessage(senderDeviceId,sessionId,  credit,ti
 
     return writer.getBytes()
 
+def getSubscribeMessage(types):
+    writer = RemoteMeDataWriter()
+    writer.writeUInt16(remotemeStruct.MessageType.EVENT_SUBSCRIBER._value_)
+    writer.writeUInt16(2*len(types))
+    for x in types:
+        writer.writeUInt16(x._value_)
+    return writer.getBytes()
+
 def getPushNotificationMessage(webPageDeviceId,title,body,badge,icon,image,vibrate=None):
     if vibrate is None:
         vibrate = []

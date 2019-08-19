@@ -28,6 +28,7 @@ class RemoteMe(metaclass=Singleton):
 
     __onWebRtcConnectionChangeListeners=[]
     __onWebsocketConnectionChangeListeners = []
+    __onDeviceConnectionChangeListeners = []
 
     __socketObj = None
     __ownId = None
@@ -116,9 +117,10 @@ class RemoteMe(metaclass=Singleton):
                                 print('PYTHON wrong deviceId :{} '.format(receiverDeviceId))
                         elif messageType in (remotemeStruct.MessageType.VARIABLE_CHANGE_PROPAGATE_MESSAGE, remotemeStruct.MessageType.VARIABLE_CHANGE_PROPAGATE_MESSAGE_WEBPAGE_TOKEN):
                             self.getVariables().__onVariableChangePropagate(data,messageType)
+                        elif messageType == remotemeStruct.MessageType.DEVICE_CONNECTION_CHANGE:
+                            self.__onDeviceConnectionChange(data,size)
                         elif messageType == remotemeStruct.MessageType.CONNECTION_CHANGE:
                             self.__onConnectionChange(data)
-
                         else:
                             print('PYTHON wrong data type {} '.format(messageType))
                 concesousErrors = 0
@@ -169,6 +171,20 @@ class RemoteMe(metaclass=Singleton):
         else:
             self.__logger.warning("got user sync message but no function to process was set")
 
+
+    def __onDeviceConnectionChange(self,data,size):
+        reader = RemoteMeDataReader(data)
+        size = int(size/3)
+        self.__logger.warning("size:{}".format(size))
+
+        for i in range(0,size):
+            deviceId = reader.readUInt16()
+            state = reader.readUInt8() == 1
+            for listener in self.__onDeviceConnectionChangeListeners:
+                listener(deviceId,state)
+
+
+
     def __onConnectionChange(self,data):
         reader = RemoteMeDataReader(data)
 
@@ -186,7 +202,7 @@ class RemoteMe(metaclass=Singleton):
             for toCall in self.__onWebRtcConnectionChangeListeners:
                 toCall(state)
 
-    def send(self,message):
+    def  send(self,message):
         self.__socketObj.sendall(message)
 
     def sendRest(self, message):
@@ -274,8 +290,14 @@ class RemoteMe(metaclass=Singleton):
     def sendDecreaseGuestKeyCreditAndTimeMessage(self, sessionId, credit,time):
         self.send(remotemeMessages.getDecreaseGuestKeyCreditAndTimeMessage(self.__ownId, sessionId,credit, time))
 
+
+    def subscribeDeviceConnectionChangeEvent(self,listener):
+        self.subscribeEvent(remotemeStruct.EventSubscriberType.DEVICE_CONNECTION,listener)
+
+    def subscribeEvent(self, type, listener):
+        self.__onDeviceConnectionChangeListeners.append(listener)
+        self.send(remotemeMessages.getSubscribeMessage([type]))
+
     def wait(self):
         self.__threadRead.join()
-
-
 
