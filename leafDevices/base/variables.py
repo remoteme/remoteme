@@ -202,7 +202,7 @@ class Variables:
         writer = RemoteMeDataWriter()
         writer.writeUInt16(remotemeStruct.VariableType.DOUBLE._value_)
         writer.writeString(name)
-        writer.writeDouble(1 if value else 0)
+        writer.writeDouble(value)
         self.__remoteMe.send(
             remotemeMessages.getVariableChangeMessage(self.__remoteMe.getDeviceId(), ignoreCurrent, writer.getBytes()))
 
