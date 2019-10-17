@@ -182,14 +182,12 @@ signal.signal(signal.SIGUSR1, handler)
 try:
 
 
-    for x in range(0, 10000):
+    while True:
         addExisitingChildrensOfRemoteme()
         if (remotemeThread and remotemeThread.is_alive()):
             pass #print("remoteme me pid {} ".format(remotemeThreadId))
         else:
             runRemoteme()
-
-
 
         if lastSignalReceived+20<time.time():
             printWARNING("didnt get signlal from remoteme for longer then 20s - killing and restarting")
