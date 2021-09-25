@@ -44,7 +44,7 @@ class RemoteMeDataReader:
             dataRet.append(self.readUInt8())
             size = size - 1
 
-        return dataRet
+        return bytearray(dataRet)
 
     def readRest(self):
         return self.readData(len(self.data)-self.offset)
