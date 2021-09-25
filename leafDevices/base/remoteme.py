@@ -58,7 +58,7 @@ class RemoteMe(metaclass=Singleton):
                             receiverDeviceId = reader.readUInt16()
                             senderDeviceId = reader.readUInt16()
                             messageId = reader.readUInt16()
-                            data = reader.readRest()
+                            data = bytearray(reader.readRest())
 
 
                             if (self.__ownId==receiverDeviceId):
@@ -77,7 +77,7 @@ class RemoteMe(metaclass=Singleton):
                             identifier = reader.readUInt16()
                             credit = reader.readUInt16()
                             time = reader.readUInt16()
-                            data = reader.readRest()
+                            data = bytearray(reader.readRest())
 
                             if (self.__ownId == receiverDeviceId):
                                 self.__onUserMessage(userMessageSettings, senderDeviceId, 0, data,sessionId,identifier,credit,time)
