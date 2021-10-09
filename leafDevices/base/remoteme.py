@@ -51,9 +51,8 @@ class RemoteMe(metaclass=Singleton):
                     data = self.__socketObj.recv(size)
                     if (len(data) == size):
                         self.__logger.debug('Python message received')
-						reader = RemoteMeDataReader(data)
-                        if (messageType == remotemeStruct.MessageType.USER_MESSAGE):
-							
+                        reader = RemoteMeDataReader(data)
+                        if (messageType == remotemeStruct.MessageType.USER_MESSAGE):		
                             userMessageSettings = remotemeStruct.UserMessageSettings( reader.readUInt8())  # for later use
                             receiverDeviceId = reader.readUInt16()
                             senderDeviceId = reader.readUInt16()
